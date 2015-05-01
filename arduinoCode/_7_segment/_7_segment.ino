@@ -5,7 +5,6 @@
 #define disp2 6
 #define ldr A0
 #define pushButton 2
-#define interruptPin 9
 #define led 11
 
 const byte numbers[10] = {0b11111100,
@@ -40,9 +39,6 @@ void setup() {
   pinMode(disp1, OUTPUT);
   pinMode(disp2, OUTPUT);
   pinMode(led, OUTPUT);
-  pinMode(interruptPin, OUTPUT);
-  digitalWrite(interruptPin, HIGH);
-  attachInterrupt(interruptPin, offAlarm, LOW);
 
   pinMode(pushButton, OUTPUT);
   digitalWrite(pushButton, HIGH);

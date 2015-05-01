@@ -1,10 +1,12 @@
-#define data 2
-#define clock 3
+#define data 8
+#define clock 9
 #define clr 4
 #define disp1 5
 #define disp2 6
 #define ldr A0
+#define pushButton 2
 #define interruptPin 9
+#define led 11
 
 const byte numbers[10] = {0b11111100,
                           0b01100000,
@@ -19,6 +21,14 @@ const byte numbers[10] = {0b11111100,
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
 boolean alarmStart = false; 
+int i = 20;
+bool triggered;
+float intensity = 0;
+int timer = 10;
+float threshold = 1500;
+int counter = 20;
+int counterAngkat = 0;
+bool red = false;
 
 void setup() {
   Serial.begin(9600);
@@ -29,10 +39,15 @@ void setup() {
   pinMode(clr, OUTPUT);
   pinMode(disp1, OUTPUT);
   pinMode(disp2, OUTPUT);
+  pinMode(led, OUTPUT);
   pinMode(interruptPin, OUTPUT);
   digitalWrite(interruptPin, HIGH);
   attachInterrupt(interruptPin, offAlarm, LOW);
 
+  pinMode(pushButton, OUTPUT);
+  digitalWrite(pushButton, HIGH);
+  attachInterrupt(0, increaseCounter, HIGH);
+  
   digitalWrite(clr, HIGH);
   inputString.reserve(200);
   
@@ -44,16 +59,10 @@ void offAlarm()
   Serial.println("off");
 }
 
-int i = 20;
-bool triggered;
-int intensity = 0;
-int timer = 10;
-int threshold = 200;
-
 void loop() {
   if (stringComplete) {
     Serial.println(inputString);
-    if (inputString == "start") {
+    if (inputString == "start\n") {
       alarmStart = true;
     }
     inputString = "";
@@ -61,12 +70,14 @@ void loop() {
   }
   
   if (alarmStart) {
+    analogWrite(led, 0);
+    
     if (i==0) {
       Serial.println("off");
       alarmStart = false;
     }
     else if (alarmStart) {
-      intensity = analogRead(ldr);
+      intensity = (analogRead(ldr)-20)*5.889;
       Serial.println(intensity);
       
       if(intensity >= threshold){
@@ -81,13 +92,17 @@ void loop() {
         }    
         i--; 
       }else{
-        i = 20;
+        i = counter;
       }
     }
     for(int j = 0; j < timer; j++){
       displayDigits(i);    
       intensity = analogRead(ldr);    
     }
+  }
+  else {
+    displayDigits(i);
+    analogWrite(led, 255);
   }
 } 
 
@@ -140,6 +155,19 @@ void serialEvent() {
     if (inChar == '\n') {
       stringComplete = true;
     } 
+  }
+}
+
+void increaseCounter() {
+  Serial.println("Push Button Pressed");
+  counterAngkat = (counterAngkat + 1) %2;
+  if (counterAngkat == 0 && !alarmStart) {
+    i++;
+    counter++;
+    if (counter > 99) {
+      counter = 0;
+      i = 0;
+    }
   }
 }
 

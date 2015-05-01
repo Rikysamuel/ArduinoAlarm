@@ -7,7 +7,11 @@
 #include <cstring>
 #include <unistd.h>
 #include <windows.h>
+#include <sstream>
 using namespace std;
+
+#define SSTR( x ) dynamic_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
 
 DWORD WINAPI MyThreadFunction( LPVOID lpParam );
 void playSong();
@@ -18,32 +22,36 @@ DWORD dwThreadId;
 int main(int argc, char* argv[])
 {
 	printf("Welcome to the serial test app!\n\n");
-	string str = "\\\\.\\COM30";
+	string str = "\\\\.\\COM13";
 
 	char *cstr = new char[str.length() + 1];
 	strcpy(cstr, str.c_str());
 	Serial* SP = new Serial(cstr);    // adjust as needed
 
 	if (SP->IsConnected())
-		printf("We're connected");
+		printf("We're connected\n");
 
-	char incomingData[256] = "";			// don't forget to pre-allocate memory
-	//printf("%s\n",incomingData);
+	//char incomingData[256] = "";
 	int dataLength = 256;
 	int readResult = 0;
 
-	cout << endl;
+	//kirim start
 	cin >> str;
 	cout << "user command = " << str << endl;
+	str+="\n";
+
 	char* sendData = new char[str.length()+1];
 	strcpy(sendData, str.c_str());
+
 	SP->WriteData(sendData, dataLength);
-	if (str=="start") {
+
+	if (str == "start\n") {
 		playSong();
 	}
 
 	while(SP->IsConnected())
 	{
+		char incomingData[256] = "";
 		readResult = SP->ReadData(incomingData,dataLength);
 		printf("Bytes read: (-1 means no data available) %i\n",readResult);
 
@@ -52,11 +60,12 @@ int main(int argc, char* argv[])
 		if (test.find("off") != std::string::npos) {
 		    std::cout << "CountDown Off!" << '\n';
 		    //kill(PID, 15);  //Sends the SIGINT Signal to the process, telling it to stop.
-		    int retval = ::_tsystem( _T("taskkill /F /T /IM vlc.exe") );
+		    int retval = ::_tsystem( _T("taskkill /F /T /IM wmplayer.exe") );
 		    TerminateThread(hThread, dwThreadId);
 			CloseHandle(hThread);
 		    break;
 		}
+
 		test = "";
 
 		Sleep(500);
@@ -75,6 +84,6 @@ void playSong() {
 }
 
 DWORD WINAPI MyThreadFunction( LPVOID lpParam ) {
-    system("song.flac");
+    system("song.mp3");
     return 0; 
 }
